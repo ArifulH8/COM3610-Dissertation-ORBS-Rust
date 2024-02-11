@@ -6,7 +6,7 @@ use crate::Config;
 pub fn start(config: Config) {
     println!("Slicer Start");
 
-    let contents = match read_file(config.file_path) {
+    let contents = match read_file(&config.file_path) {
         Ok(contents) => contents,
         Err(error) => panic!("Problem opening the file: {:?}", error),
     };
@@ -14,12 +14,22 @@ pub fn start(config: Config) {
     let mut string_lines = file_lines(contents);
     string_lines.reverse();
 
-    slice(string_lines);
+    string_lines = slice(string_lines);
+    string_lines.reverse();
+
+    write_file(&config.file_path, string_lines).is_ok();
 }
 
-fn read_file(file_path: String) -> Result<String, Box<dyn Error>> {
+fn read_file(file_path: &String) -> Result<String, Box<dyn Error>> {
     let contents = fs::read_to_string(file_path)?;
     Ok(contents)
+}
+
+fn write_file(file_path: &String, file_vec: Vec<String>) -> Result<(), Box<dyn Error>> {
+    let joined_contents = file_vec.join("\n");
+    fs::write(file_path, joined_contents)?;
+
+    Ok(())
 }
 
 fn file_lines(contents: String) -> Vec<String> {
@@ -27,7 +37,7 @@ fn file_lines(contents: String) -> Vec<String> {
     lines
 }
 
-fn slice(mut file_vec: Vec<String>) {
+fn slice(mut file_vec: Vec<String>) -> Vec<String> {
     // let vec_lenth = file_vec.len();
     let mut counter = 0;
     while counter < file_vec.len() {
@@ -43,7 +53,7 @@ fn slice(mut file_vec: Vec<String>) {
         counter += 1;
     }
 
-    println!("{:?}", file_vec);
+    file_vec
 }
 
 fn delete(_file_vec: Vec<String>, counter: usize) -> bool {
