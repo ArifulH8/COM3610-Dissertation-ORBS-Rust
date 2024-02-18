@@ -42,47 +42,71 @@ fn slice(config: &Config, mut file_vec: Vec<String>) -> Vec<String> {
     // let vec_lenth = file_vec.len();
     let mut counter = 0;
     while counter < file_vec.len() {
-        println!("{}", counter);
         let file_vec_clone = file_vec.clone();
-
-        let result = delete(&config, file_vec_clone, counter);
-
+        println!("----------------------");
+        println!("Current line {}", (file_vec.len()-counter));
+        let (result, best_dw) = delete(&config, file_vec_clone, counter);
         if result {
-            file_vec.remove(counter);
+            let best_dw = counter + best_dw + 1;
+            println!("Best dw {}", best_dw);
+            file_vec.drain(counter..best_dw);
+        } else {
+            counter += 1;
         }
 
-        counter += 1;
     }
 
     file_vec
 }
 
-fn delete(config: &Config, file_vec: Vec<String>, counter: usize) -> bool {
-    // let mut _bestDW = 0
-    // let mut succeed = false;
+fn delete(config: &Config, file_vec: Vec<String>, counter: usize) -> (bool, usize) {
+    let mut best_dw= 0;
+    let mut succeed = false;
 
-    let mut file_vec_clone = file_vec.clone();
-    file_vec_clone.remove(counter);
-    file_vec_clone.reverse();
-    write_file(&config.file_path, file_vec_clone).unwrap();
+    for dw in 0..3 {
+        println!("Current dw {}", dw);
+        let mut file_vec_clone = file_vec.clone();
+        let current_dw = counter + dw + 1;
+        println!("Counter:{}, dw:{}", counter, dw);
+        if current_dw > file_vec_clone.len() {
+            continue;
+        }
+        file_vec_clone.drain(counter..current_dw);
+        file_vec_clone.reverse();
+        write_file(&config.file_path, file_vec_clone).unwrap();
+        match test_run(config) {
+            Ok(true) => {
+                println!("Success");
+                best_dw = dw;
+                succeed = true;
+            },
+            Ok(_) => println!("Failure"),
+            Err(_) => (),
+        }
+        
+    }
 
+    (succeed, best_dw)
+}
+
+fn test_run(config: &Config) -> Result<bool, Box<dyn Error>> {
     // let binding = fs::canonicalize(&config.folder_path.clone()).unwrap();
     // let path = binding.to_str().unwrap();
     let path = &config.folder_path;
 
-    let status= if cfg!(target_os = "windows") {
+    let output= if cfg!(target_os = "windows") {
         Command::new("cmd")
             .args(["/C", &config.test_command, &config.test_args])
             .current_dir(path)
-            .status()
+            .output()
             .expect("failed to execute process")
     } else {
         Command::new("sh")
             .args(["-c", &config.test_command, &config.test_args])
             .current_dir(path)
-            .status()
+            .output()
             .expect("failed to execute process")
     };
 
-    status.success()
+    Ok(output.status.success())
 }
