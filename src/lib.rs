@@ -3,6 +3,8 @@ pub mod slicer;
 pub struct Config {
     pub folder_path: String,
     pub file_path: String,
+    pub test_command: String,
+    pub test_args: String,
 }
 
 impl Config {
@@ -19,9 +21,22 @@ impl Config {
             None => return Err("Didn't get file path"),
         };
 
+        let test_command = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get test command"),
+        };
+
+        let test_args = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get test args"),
+        };
+
+
         Ok(Config {
             folder_path,
             file_path,
+            test_command,
+            test_args,
         })
     }
 }
