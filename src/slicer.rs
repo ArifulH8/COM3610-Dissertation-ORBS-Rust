@@ -94,33 +94,27 @@ fn test_run(config: &Config) -> Result<bool, Box<dyn Error>> {
     let path = &config.folder_path;
 
     let output= if cfg!(target_os = "windows") {
-        if let Some(test_args) = &config.test_args{
-            Command::new("cmd")
-                .args(["/C", &config.test_command, &test_args.join(" ")])
+        let test_command_args = match &config.test_args.clone() {
+            None => { ["/C", &config.test_command].map(String::from).to_vec() }
+            Some(value) => { ["/C", &config.test_command, &value.join(" ")].map(String::from).to_vec() }
+        };
+
+        Command::new("cmd")
+            .args(test_command_args)
                 .current_dir(path)
                 .output()
                 .expect("failed to execute process")
-        } else{
-            Command::new("cmd")
-                .args(["/C", &config.test_command])
-                .current_dir(path)
-                .output()
-                .expect("failed to execute process")
-        }
     } else {
-        if let Some(test_args) = &config.test_args{
-            Command::new("sh")
-                .args(["-c", &config.test_command, &test_args.join(" ")])
-                .current_dir(path)
-                .output()
-                .expect("failed to execute process")
-        } else{
-            Command::new("sh")
-                .args(["-c", &config.test_command])
-                .current_dir(path)
-                .output()
-                .expect("failed to execute process")
-        }
+        let test_command_args = match &config.test_args.clone() {
+            None => { ["-c", &config.test_command].map(String::from).to_vec() }
+            Some(value) => { ["-c", &config.test_command, &value.join(" ")].map(String::from).to_vec() }
+        };
+
+        Command::new("sh")
+            .args(test_command_args)
+            .current_dir(path)
+            .output()
+            .expect("failed to execute process")
     };
 
     Ok(output.status.success())
