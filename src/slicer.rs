@@ -39,12 +39,12 @@ fn file_lines(contents: String) -> Vec<String> {
 }
 
 fn slice(config: &Config, mut file_vec: Vec<String>) -> Vec<String> {
-    // let vec_lenth = file_vec.len();
+    // let vec_length = file_vec.len();
     let mut counter = 0;
     while counter < file_vec.len() {
         let file_vec_clone = file_vec.clone();
         println!("----------------------");
-        println!("Current line {}", (file_vec.len()-counter));
+        println!("Current line {}", file_vec.len()-counter);
         let (result, best_dw) = delete(&config, file_vec_clone, counter);
         if result {
             let best_dw = counter + best_dw + 1;
@@ -95,17 +95,33 @@ fn test_run(config: &Config) -> Result<bool, Box<dyn Error>> {
     let path = &config.folder_path;
 
     let output= if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(["/C", &config.test_command, &config.test_args])
-            .current_dir(path)
-            .output()
-            .expect("failed to execute process")
+        if let Some(test_args) = &config.test_args{
+            Command::new("cmd")
+                .args(["/C", &config.test_command, &test_args.join(" ")])
+                .current_dir(path)
+                .output()
+                .expect("failed to execute process")
+        } else{
+            Command::new("cmd")
+                .args(["/C", &config.test_command])
+                .current_dir(path)
+                .output()
+                .expect("failed to execute process")
+        }
     } else {
-        Command::new("sh")
-            .args(["-c", &config.test_command, &config.test_args])
-            .current_dir(path)
-            .output()
-            .expect("failed to execute process")
+        if let Some(test_args) = &config.test_args{
+            Command::new("sh")
+                .args(["-c", &config.test_command, &test_args.join(" ")])
+                .current_dir(path)
+                .output()
+                .expect("failed to execute process")
+        } else{
+            Command::new("sh")
+                .args(["-c", &config.test_command])
+                .current_dir(path)
+                .output()
+                .expect("failed to execute process")
+        }
     };
 
     Ok(output.status.success())
