@@ -11,7 +11,7 @@ pub struct Config {
 
     /// File path of the file to be sliced
     #[arg(long)]
-    pub file_path: String,
+    pub file_path: Option<String>,
 
     /// Test command to be used for slicing
     #[arg(long)]

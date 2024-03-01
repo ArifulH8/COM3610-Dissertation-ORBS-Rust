@@ -7,18 +7,56 @@ use crate::Config;
 pub fn start(config: Config) {
     println!("Slicer Start");
 
-    let contents = match read_file(&config.file_path) {
-        Ok(contents) => contents,
-        Err(error) => panic!("Problem opening the file: {:?}", error),
-    };
+    match &config.file_path {
+        Some(file_path) => {
+            match one_file(&config, file_path) {
+                Ok(_) => {println!("Success slicing {}", &file_path)}
+                Err(_) => {println!("Failure slicing due to {} -> Skipping", &file_path)}
+            }
+        }
+        None => {
+            multiple_files(&config)
+        }
+    }
+
+}
+
+fn one_file(config: &Config, file_path: &String) -> Result<(), Box<dyn Error>> {
+    println!("Slicing File {}", file_path);
+
+    let contents = read_file(file_path).unwrap_or_else(|error| format!("Problem opening the file: {:?}", error));
 
     let mut string_lines = file_lines(contents);
     string_lines.reverse();
 
-    string_lines = slice(&config, string_lines);
+    string_lines = slice(&config, file_path, string_lines);
     string_lines.reverse();
 
-    write_file(&config.file_path, string_lines).unwrap();
+    write_file(file_path, string_lines).unwrap();
+
+    Ok(())
+
+}
+
+fn multiple_files(config: &Config) {
+    let paths = fs::read_dir(&config.folder_path).unwrap();
+
+    let names =
+        paths.filter_map(|entry| {
+            entry.ok().and_then(|e|
+                e.path().file_name()
+                    .and_then(|n| n.to_str().map(|s| String::from(s)))
+            )
+        }).collect::<Vec<String>>();
+
+    for name in names {
+        let full_path = format!("{}/{}", &config.folder_path, &name);
+
+        match one_file(&config, &full_path) {
+            Ok(_) => {println!("Success slicing {}", &full_path)}
+            Err(_) => {println!("Failure slicing due to {} -> Skipping", &full_path)}
+        }
+    }
 }
 
 fn read_file(file_path: &String) -> Result<String, Box<dyn Error>> {
@@ -38,13 +76,13 @@ fn file_lines(contents: String) -> Vec<String> {
     lines
 }
 
-fn slice(config: &Config, mut file_vec: Vec<String>) -> Vec<String> {
+fn slice(config: &Config, file_path:  &String, mut file_vec: Vec<String>) -> Vec<String> {
     let mut counter = 0;
     while counter < file_vec.len() {
         let file_vec_clone = file_vec.clone();
         println!("----------------------");
         println!("Current line {}", file_vec.len()-counter);
-        let (result, best_dw) = delete(&config, file_vec_clone, counter);
+        let (result, best_dw) = delete(&config,file_path, file_vec_clone, counter);
         if result {
             let best_dw = counter + best_dw + 1;
             println!("Best dw {}", best_dw);
@@ -58,7 +96,7 @@ fn slice(config: &Config, mut file_vec: Vec<String>) -> Vec<String> {
     file_vec
 }
 
-fn delete(config: &Config, file_vec: Vec<String>, counter: usize) -> (bool, usize) {
+fn delete(config: &Config, file_path: &String, file_vec: Vec<String>, counter: usize) -> (bool, usize) {
     let mut best_dw= 0;
     let mut succeed = false;
 
@@ -72,7 +110,7 @@ fn delete(config: &Config, file_vec: Vec<String>, counter: usize) -> (bool, usiz
         }
         file_vec_clone.drain(counter..current_dw);
         file_vec_clone.reverse();
-        write_file(&config.file_path, file_vec_clone).unwrap();
+        write_file(file_path, file_vec_clone).unwrap();
         match test_run(config) {
             Ok(true) => {
                 println!("Success");
