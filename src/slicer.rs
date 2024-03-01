@@ -39,7 +39,6 @@ fn file_lines(contents: String) -> Vec<String> {
 }
 
 fn slice(config: &Config, mut file_vec: Vec<String>) -> Vec<String> {
-    // let vec_length = file_vec.len();
     let mut counter = 0;
     while counter < file_vec.len() {
         let file_vec_clone = file_vec.clone();
