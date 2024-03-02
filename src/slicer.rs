@@ -53,12 +53,22 @@ fn multiple_files(config: &Config) {
     for name in names {
         let full_path = format!("{}/{}", &config.folder_path, &name);
 
+        match &config.skip_files {
+            Some(skip_file_vec) => {
+                if skip_file_vec.iter().any(|i| full_path.contains(i)) {
+                    println!("Skipping {} ", &full_path);
+                    continue
+                }
+            }
+            _ => {}
+        }
+
         match one_file(&config, &full_path) {
             Ok(_) => {
                 println!("Success slicing {}", &full_path)
             }
-            Err(_) => {
-                println!("Failure slicing due to {} -> Skipping", &full_path)
+            Err(e) => {
+                println!("Failure slicing due to {} -> Skipping {}", e, &name)
             }
         }
     }
@@ -122,7 +132,7 @@ fn delete(config: &Config, file_path: &String, file_vec: Vec<String>, counter: u
                 succeed = true;
             }
             Ok(_) => println!("Failure"),
-            Err(e) => (println!("Failure due to error: {}", e)),
+            Err(e) => println!("Failure due to error: {}", e),
         }
     }
 

@@ -20,4 +20,8 @@ pub struct Config {
     /// Test args given to the test command
     #[arg(long)]
     pub test_args: Option<Vec<String>>,
+
+    /// Names of files to skip when slicing multiple files
+    #[arg(long)]
+    pub skip_files: Option<Vec<String>>,
 }
