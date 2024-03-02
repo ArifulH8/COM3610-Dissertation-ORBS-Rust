@@ -8,23 +8,23 @@ pub fn start(config: Config) {
     println!("Slicer Start");
 
     match &config.file_path {
-        Some(file_path) => {
-            match one_file(&config, file_path) {
-                Ok(_) => {println!("Success slicing {}", &file_path)}
-                Err(_) => {println!("Failure slicing due to {} -> Skipping", &file_path)}
+        Some(file_path) => match one_file(&config, file_path) {
+            Ok(_) => {
+                println!("Success slicing {}", &file_path)
             }
-        }
-        None => {
-            multiple_files(&config)
-        }
+            Err(e) => {
+                println!("Failure slicing due to {} -> Skipping {}", e, &file_path)
+            }
+        },
+        None => multiple_files(&config),
     }
-
 }
 
 fn one_file(config: &Config, file_path: &String) -> Result<(), Box<dyn Error>> {
     println!("Slicing File {}", file_path);
 
-    let contents = read_file(file_path).unwrap_or_else(|error| format!("Problem opening the file: {:?}", error));
+    let contents = read_file(file_path)
+        .unwrap_or_else(|error| format!("Problem opening the file: {:?}", error));
 
     let mut string_lines = file_lines(contents);
     string_lines.reverse();
@@ -35,26 +35,31 @@ fn one_file(config: &Config, file_path: &String) -> Result<(), Box<dyn Error>> {
     write_file(file_path, string_lines).unwrap();
 
     Ok(())
-
 }
 
 fn multiple_files(config: &Config) {
     let paths = fs::read_dir(&config.folder_path).unwrap();
 
-    let names =
-        paths.filter_map(|entry| {
-            entry.ok().and_then(|e|
-                e.path().file_name()
+    let names = paths
+        .filter_map(|entry| {
+            entry.ok().and_then(|e| {
+                e.path()
+                    .file_name()
                     .and_then(|n| n.to_str().map(|s| String::from(s)))
-            )
-        }).collect::<Vec<String>>();
+            })
+        })
+        .collect::<Vec<String>>();
 
     for name in names {
         let full_path = format!("{}/{}", &config.folder_path, &name);
 
         match one_file(&config, &full_path) {
-            Ok(_) => {println!("Success slicing {}", &full_path)}
-            Err(_) => {println!("Failure slicing due to {} -> Skipping", &full_path)}
+            Ok(_) => {
+                println!("Success slicing {}", &full_path)
+            }
+            Err(_) => {
+                println!("Failure slicing due to {} -> Skipping", &full_path)
+            }
         }
     }
 }
@@ -76,13 +81,13 @@ fn file_lines(contents: String) -> Vec<String> {
     lines
 }
 
-fn slice(config: &Config, file_path:  &String, mut file_vec: Vec<String>) -> Vec<String> {
+fn slice(config: &Config, file_path: &String, mut file_vec: Vec<String>) -> Vec<String> {
     let mut counter = 0;
     while counter < file_vec.len() {
         let file_vec_clone = file_vec.clone();
         println!("----------------------");
-        println!("Current line {}", file_vec.len()-counter);
-        let (result, best_dw) = delete(&config,file_path, file_vec_clone, counter);
+        println!("Current line {}", file_vec.len() - counter);
+        let (result, best_dw) = delete(&config, file_path, file_vec_clone, counter);
         if result {
             let best_dw = counter + best_dw + 1;
             println!("Best dw {}", best_dw);
@@ -90,7 +95,6 @@ fn slice(config: &Config, file_path:  &String, mut file_vec: Vec<String>) -> Vec
         } else {
             counter += 1;
         }
-
     }
 
     file_vec
@@ -116,11 +120,10 @@ fn delete(config: &Config, file_path: &String, file_vec: Vec<String>, counter: u
                 println!("Success");
                 best_dw = dw;
                 succeed = true;
-            },
+            }
             Ok(_) => println!("Failure"),
-            Err(_) => (),
+            Err(e) => (println!("Failure due to error: {}", e)),
         }
-        
     }
 
     (succeed, best_dw)
@@ -131,21 +134,25 @@ fn test_run(config: &Config) -> Result<bool, Box<dyn Error>> {
     // let path = binding.to_str().unwrap();
     let path = &config.folder_path;
 
-    let output= if cfg!(target_os = "windows") {
+    let output = if cfg!(target_os = "windows") {
         let test_command_args = match &config.test_args.clone() {
-            None => { ["/C", &config.test_command].map(String::from).to_vec() }
-            Some(value) => { ["/C", &config.test_command, &value.join(" ")].map(String::from).to_vec() }
+            None => ["/C", &config.test_command].map(String::from).to_vec(),
+            Some(value) => ["/C", &config.test_command, &value.join(" ")]
+                .map(String::from)
+                .to_vec(),
         };
 
         Command::new("cmd")
             .args(test_command_args)
-                .current_dir(path)
-                .output()
-                .expect("failed to execute process")
+            .current_dir(path)
+            .output()
+            .expect("failed to execute process")
     } else {
         let test_command_args = match &config.test_args.clone() {
-            None => { ["-c", &config.test_command].map(String::from).to_vec() }
-            Some(value) => { ["-c", &config.test_command, &value.join(" ")].map(String::from).to_vec() }
+            None => ["-c", &config.test_command].map(String::from).to_vec(),
+            Some(value) => ["-c", &config.test_command, &value.join(" ")]
+                .map(String::from)
+                .to_vec(),
         };
 
         Command::new("sh")
