@@ -2,6 +2,9 @@ use std::error::Error;
 use std::fs;
 use std::process::Command;
 
+use walkdir::{DirEntry, WalkDir};
+
+
 use crate::Config;
 
 pub fn start(config: Config) {
@@ -38,30 +41,17 @@ fn one_file(config: &Config, file_path: &String) -> Result<(), Box<dyn Error>> {
 }
 
 fn multiple_files(config: &Config) {
-    let paths = fs::read_dir(&config.folder_path).unwrap();
 
-    let names = paths
-        .filter_map(|entry| {
-            entry.ok().and_then(|e| {
-                e.path()
-                    .file_name()
-                    .and_then(|n| n.to_str().map(|s| String::from(s)))
-            })
-        })
-        .collect::<Vec<String>>();
+    let mut names: Vec<String> = Vec::new();
+
+    for e in WalkDir::new(&config.folder_path).into_iter().filter_map(|e| e.ok()) {
+        if e.metadata().unwrap().is_file() && !is_skipped(config, &e) {
+            names.push(e.path().to_str().unwrap().to_string())
+        }
+    };
 
     for name in names {
-        let full_path = format!("{}/{}", &config.folder_path, &name);
-
-        match &config.skip_files {
-            Some(skip_file_vec) => {
-                if skip_file_vec.iter().any(|i| full_path.contains(i)) {
-                    println!("Skipping {} ", &full_path);
-                    continue
-                }
-            }
-            _ => {}
-        }
+        let full_path = &name;
 
         match one_file(&config, &full_path) {
             Ok(_) => {
@@ -71,6 +61,21 @@ fn multiple_files(config: &Config) {
                 println!("Failure slicing due to {} -> Skipping {}", e, &name)
             }
         }
+    }
+}
+
+fn is_skipped(config: &Config, entry: &DirEntry) -> bool {
+    match &config.skip_files {
+        Some(skip_file_vec) => {
+            entry.path()
+                .to_str()
+                .map(|s| skip_file_vec.iter().any(|i| {
+                    s.contains(i)
+                }))
+                .unwrap_or(false)
+
+        }
+        _ => {false}
     }
 }
 
