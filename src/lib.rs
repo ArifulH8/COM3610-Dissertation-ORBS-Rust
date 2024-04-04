@@ -24,4 +24,8 @@ pub struct Config {
     /// Names of files to skip when slicing multiple files
     #[arg(long)]
     pub skip_files: Option<Vec<String>>,
+
+    /// Set true when you need detailed output
+    #[arg(short, long, default_value_t = false)]
+    pub verbose: bool,
 }

@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fs;
+use std::io::{self, Write};
 use std::process::Command;
 use std::time::{Instant};
 
@@ -182,5 +183,8 @@ fn test_run(config: &Config) -> Result<bool, Box<dyn Error>> {
             .expect("failed to execute process")
     };
 
+    if config.verbose {
+        io::stdout().write_all(&output.stdout).unwrap();
+    }
     Ok(output.status.success())
 }
