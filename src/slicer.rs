@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fs;
 use std::process::Command;
+use std::time::{Instant};
 
 use walkdir::{DirEntry, WalkDir};
 
@@ -9,6 +10,7 @@ use crate::Config;
 
 pub fn start(config: Config) {
     println!("Slicer Start");
+    let current_time = Instant::now();
 
     match &config.file_path {
         Some(file_path) => match one_file(&config, file_path) {
@@ -21,6 +23,9 @@ pub fn start(config: Config) {
         },
         None => multiple_files(&config),
     }
+
+    let elapsed_time = current_time.elapsed();
+    println!("Running slicer start took {} seconds.", elapsed_time.as_secs());
 }
 
 fn one_file(config: &Config, file_path: &String) -> Result<(), Box<dyn Error>> {
