@@ -25,7 +25,20 @@ pub struct Config {
     #[arg(long)]
     pub skip_files: Option<Vec<String>>,
 
+    /// Number of deletion windows (>0)
+    #[arg(short, long, default_value_t = 3, value_parser = del_window_in_range)]
+    pub del_win: usize,
+
     /// Set true when you need detailed output
     #[arg(short, long, default_value_t = false)]
     pub verbose: bool,
+}
+
+fn del_window_in_range(s: &str) -> Result<usize, String> {
+    let del_win: usize = s.parse().map_err(|_| format!("`{s}` isn't a deletion window number"))?;
+    if del_win > 0 {
+        Ok(del_win)
+    } else {
+        Err(format!("Deletion window ({}) is less than 0", {del_win}))
+    }
 }

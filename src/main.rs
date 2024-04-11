@@ -4,9 +4,9 @@ use orbs_slicer::slicer;
 use orbs_slicer::Config;
 
 fn main() {
-    println!("Hello, observation based slicer!");
-
     let config = Config::parse();
+
+    println!("Hello, observation based slicer!");
 
     println!("Config folder path: {}", config.folder_path);
     println!("Config file path: {:?}", config.file_path);

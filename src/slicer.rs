@@ -125,7 +125,7 @@ fn delete(config: &Config, file_path: &String, file_vec: Vec<String>, counter: u
     let mut best_dw= 0;
     let mut succeed = false;
 
-    for dw in 0..3 {
+    for dw in 0..config.del_win {
         println!("Current dw {}", dw);
         let mut file_vec_clone = file_vec.clone();
         let current_dw = counter + dw + 1;
