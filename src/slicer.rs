@@ -122,7 +122,7 @@ fn slice(config: &Config, file_path: &String, mut file_vec: Vec<String>) -> Vec<
 }
 
 fn delete(config: &Config, file_path: &String, file_vec: Vec<String>, counter: usize) -> (bool, usize) {
-    let mut best_dw= 0;
+    let mut best_dw = 0;
     let mut succeed = false;
 
     for dw in 0..config.del_win {
