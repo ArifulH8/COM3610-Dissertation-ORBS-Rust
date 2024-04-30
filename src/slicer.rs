@@ -32,8 +32,10 @@ pub fn start(config: Config) {
 fn one_file(config: &Config, file_path: &String) -> Result<(), Box<dyn Error>> {
     println!("Slicing File {}", file_path);
 
-    let contents = read_file(file_path)
-        .unwrap_or_else(|error| format!("Problem opening the file: {:?}", error));
+    let contents = match read_file(file_path) {
+        Ok(contents) => contents,
+        Err(error) => panic!("Problem opening the file: {}\nError:{:?}", file_path, error),
+    };
 
     let mut string_lines = file_lines(contents);
     string_lines.reverse();
