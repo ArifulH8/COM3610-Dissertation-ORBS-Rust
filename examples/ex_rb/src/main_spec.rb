@@ -1,4 +1,4 @@
-require "./main"
+require_relative  "./main"
 
 describe "#hello_name" do
     it "returns the Hello World Ariful" do

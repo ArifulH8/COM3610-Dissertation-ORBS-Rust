@@ -10,4 +10,4 @@ def hello_name(name)
   return "Hello World and hello #{name}"
 end
 
-hello_name("Ariful")
+puts(hello_name("Ariful"))
